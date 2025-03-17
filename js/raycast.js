@@ -25,7 +25,7 @@ class Raycaster {
 			textureId = level.CheckCell( start ); //Либо 0 либо id текстуры
 			if ( start.x < 0 || start.z < 0 || start.x >= level.size.x || start.z >= level.size.y || textureId ) {
 				if( start.x < 0 || start.z < 0 || start.x > level.size.x || start.z > level.size.y ) textureId = 0;
-				let outdistance = ( side ) ? ( start.z - cameraPosition.z + ( 1 - step.z ) * 0.5 ) / direction.z :	( start.x - cameraPosition.x + ( 1 - step.x ) * 0.5 ) / direction.x;
+				let outdistance = ( side ) ? ( start.z - cameraPosition.z + ( ( 1 - step.z ) >> 1 ) ) / direction.z : ( start.x - cameraPosition.x + ( ( 1 - step.x ) >> 1 ) ) / direction.x;
 				return [ outdistance , side , textureId ];
 			}
 		}

@@ -86,25 +86,36 @@
 			});
 			
 			function RenderRays() {
-				draw.DrawTexturedFloor(); //Рисует пол
+				//draw.DrawTexturedFloor(); //Рисует пол
 				draw.DrawSky();   //Рисует небо
 				let cast  = 0; //Иниациализация переменной для дистанции
 				let angle = -fovHalf; //Стартовый угол
+				
 				<!-- DrawMap(); -->
 				<!-- DrawPlayer(); -->
+				let floorDrawY = [];
 				for( let w = 0; w < width; w++ ) { //Проходит по ширине экрана
 					let rayAngle = cameraAngle + angle; //Угол самого луча
+					let floorY   = 0;
 					if( cast = caster.Cast( rayAngle ) ) {
 						let distance = cast[ 0 ];
 						let side     = cast[ 1 ];
 						let textId   = cast[ 2 ];
 						let textureX = ( !side ) ? cameraPosition.z + distance * Math.sin( rayAngle ) : cameraPosition.x + distance * Math.cos( rayAngle );
 							textureX = parseInt( Math.abs( textureX - Math.floor( textureX ) ) * textSize );
-							draw.DrawTexturedWall( w , distance * Math.cos( angle ) , textId , textureX );
+							floorY   = draw.DrawTexturedWall( w , distance * Math.cos( angle ) , textId , textureX );
 					//draw.DrawLine( cameraPosition.Multiply( cellWidth ) , cameraPosition.Plus( caster.CreateVectorFromAngle( distance , rayAngle ) ).Multiply( cellWidth ) , "rgba( 255 , 0 , 0 , 0.1 )" ); //Если дистанция не равна нулю, рисуем стену 
 					}
+					floorDrawY[ w ] = parseInt( floorY );
 					angle       += fovStep; //Повышает угол на один шаг 
 				}
+				draw.InitBuffer();
+				for( let w = 0; w < width; w++ ) {
+					let floorY = floorDrawY[ w ];
+					if( floorY ) draw.DrawTexturedFloor( w , floorY );
+				}
+				draw.Draw();
+				
 				//draw.DrawLine( cameraPosition.Multiply( cellWidth ) , cameraPosition.Plus( caster.CreateVectorFromAngle( viewDist , cameraAngle - fovHalf ) ).Multiply( cellWidth ) , "red" );
 				//draw.DrawLine( cameraPosition.Multiply( cellWidth ) , cameraPosition.Plus( caster.CreateVectorFromAngle( viewDist , cameraAngle + fovHalf ) ).Multiply( cellWidth ) , "red" );
 			}

@@ -1,6 +1,8 @@
 //Массива для кэша, значения которые надо расчитать, но они всегда одинаковые
-const pixelPointerXCache = [];
-const pixelPointerYCache = [];
+const pixelPointerXCache  = [];
+const pixelPointerYCache  = [];
+const floorViewDistCache  = [];
+const heightDistanceCache = [];
 /**
  ** @desc Отрисовка значений рейкастера
  **/
@@ -13,8 +15,6 @@ class Draw {
 	floorColor = new Color(); //Цвет пола
 	skyColor   = new Color( 168 , 217 , 255 ); //Цвет неба
 	constructor() {
-		this.frameImage  = context.getImageData( 0 , 0 , canvas.width , canvas.height );
-		this.framePixels = this.frameImage.data;
 		this.stride      = canvas.width * 4;
 		for( let y = 0; y < canvas.height; y++ ) {
 			pixelPointerYCache[ y ] = y * this.stride;
@@ -22,6 +22,20 @@ class Draw {
 		for( let x = 0; x < canvas.width; x++ ) {
 			pixelPointerXCache[ x ] = x * 4;
 		}
+		for( let w = 0; w <= width; w++ ) {
+			let rayAngle = -fovHalf + fovStep * w;
+			floorViewDistCache[ w ] = [];
+			for( let y = 0; y <= heightH; y++ ) {
+				floorViewDistCache[ w ][ y ] = viewDist / ( ( viewDist - ( y * heightStep ) ) * Math.cos( rayAngle ) );
+			}
+		}
+		for( let y = 0; y < heightH; y++ ) {
+			heightDistanceCache[ y ] = y / heightH;
+		}
+	}
+	InitBuffer() {
+		this.frameImage  = context.getImageData( 0 , 0 , canvas.width , canvas.height );
+		this.framePixels = this.frameImage.data;
 	}
 	/**
 	 ** @desc Проверяет по збуфферу и пишет пиксель в массив на вывод
@@ -79,37 +93,58 @@ class Draw {
 		this.DrawLine( { x : w , z : heightH - wallHeight } , { x : w , z : heightH + wallHeight } , color.ToString() );
 	}
 	DrawTexturedWall( w , distance , textureId , textureX ) {
-		let wallHeight = Math.min( parseInt( camDepth / ( distance ) ) , maxHeight );
-		let wallHeightH = wallHeight * 0.5;
+		let wallHeight = Math.min( parseInt( camDepth / distance ) , maxHeight );
+		let wallHeightH = parseInt( wallHeight >> 1 ); //Деление на 2
 		let distBlack  = distance / viewDist;
 		let	color      = this.shadowColor.Copy();
 			color.a    = distBlack;
+		let texture    = textures[ textureId ];
+		// let startY     = heightH - wallHeightH;
+		// let endY       = heightH + wallHeightH;
+			// if( startY < 0 ) {
+				// startY = Math.abs( startY );
+			// } else {
+				// startY = 0;
+			// }
+			// if( endY > height ) {
+				// endY = Math.abs( height - endY );
+			// } else {
+				// endY = 0;
+			// }
+			// for( let y = startY; y < wallHeight - endY; y++ ) {
+				// let textureY = parseInt( textSize * ( y / wallHeight ) );
+				// let pixel    = texture.GetRGBAPixel( parseInt( textureX ) , textureY );
+				// this.SetFramePixel( w , heightH - wallHeightH + y , { r: distBlack * pixel.r , g: distBlack * pixel.g , b : distBlack * pixel.b , a : pixel.a } );
+			// }
 		context.drawImage( textures[ textureId ].img , textureX , 0 , 1 , textSize , w , heightH - wallHeightH , 1 , wallHeight );
 		this.DrawLine( { x : w , z : heightH - wallHeightH } , { x : w , z : heightH + wallHeightH } , color.ToString() );
+		return wallHeightH;
 	}
-	DrawTexturedFloor() {
+	Draw() {
+		context.putImageData( this.frameImage , 0 , 0 );
+	}
+	DrawTexturedFloor( x , floorStart ) {
 		// Рисуем пол
 		let texture = textures[ 4 ];
 		// Рисуем горизонтальную полосу пола
-		for ( let x = 0; x < width ; x++ ) {
+		//for ( let x = 0; x < width ; x++ ) {
 			// Вычисляем шаг для текстуры
 			let rayAngle = -fovHalf + fovStep * x;
 			let angle = cameraAngle + rayAngle;
-			for ( let y = 0; y < heightH; y++ ) {
+			for ( let y = 0; y <= heightH - floorStart; y++ ) {
 				// Вычисляем расстояние до пола
-				let rowDistance  = viewDist / ( ( viewDist - ( y * heightStep ) ) * Math.cos( rayAngle )  ) / floorAspect;
-				let hDistX  = rowDistance * Math.cos( angle ) + cameraPosition.x;
-				let hDistY  = rowDistance * Math.sin( angle ) + cameraPosition.z;
+				let rowDistance = floorViewDistCache[ x ][ y ] / floorAspect;
+				let hDistX = rowDistance * Math.cos( angle ) + cameraPosition.x;
+				let hDistY = rowDistance * Math.sin( angle ) + cameraPosition.z;
 				// Текущие координаты текстуры
 				let textureX = parseInt( Math.abs( hDistX - Math.floor( hDistX ) ) * textSize ) ;
 				let textureY = parseInt( Math.abs( hDistY - Math.floor( hDistY ) ) * textSize ) ;
 				// Получаем цвет из текстуры пола
 				let pixelData = texture.GetRGBAPixel( textureX , textureY );
-					let dist = 1 - y / heightH;
+				let dist      = 1 - heightDistanceCache[ y ];
 					pixelData.a  = 255;
 				this.SetFramePixel( x , height - y , { r: dist * pixelData.r , g: dist * pixelData.g , b : dist * pixelData.b , a : pixelData.a } );
 			}
-		}
-		context.putImageData( this.frameImage , 0 , 0 );
+		//}
 	}
 }
