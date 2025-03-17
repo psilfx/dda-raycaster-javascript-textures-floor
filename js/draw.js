@@ -97,7 +97,7 @@ class Draw {
 			let angle = cameraAngle + rayAngle;
 			for ( let y = 0; y < heightH; y++ ) {
 				// Вычисляем расстояние до пола
-				let rowDistance  = viewDist / ( ( viewDist - ( y * heightStep ) ) * Math.cos( rayAngle ) ) * 1.55;
+				let rowDistance  = viewDist / ( ( viewDist - ( y * heightStep ) ) * Math.cos( rayAngle )  ) / floorAspect;
 				let hDistX  = rowDistance * Math.cos( angle ) + cameraPosition.x;
 				let hDistY  = rowDistance * Math.sin( angle ) + cameraPosition.z;
 				// Текущие координаты текстуры

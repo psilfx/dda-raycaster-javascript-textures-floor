@@ -36,6 +36,7 @@
 			const fovStep  = fov / canvas.width; //Шаг угла при проходе по экрану
 			const viewDist = 15; //Дистанция отрисовки
 			const heightStep = viewDist / heightH;
+			const floorAspect = Math.tan( fovHalf * 1.1 );
 			const camDepth = widthH / Math.tan( fovHalf ); //Глубина проекции
 			const textures = [];
 			//Текстуры с сайта https://iddqd.ru/textures?find=Doom+Hi-Res+Texture+Pack&showfull=1
