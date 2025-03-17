@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru" >
+	<head>
+		<title>Рейкастер с DDA на javascript</title>
+		<meta charset="UTF-8" />
+		<script src="js/vector.js"></script>
+		<script src="js/color.js"></script>
+		<script src="js/draw.js"></script>
+		<script src="js/map.js"></script>
+		<script src="js/raycast.js"></script>
+		<script src="js/dimage.js"></script>
+	</head>
+	<body>
+		<canvas id="texture-render" ></canvas>
+		<canvas id="raycast-canvas" width="1280" height="720" ></canvas>
+		<style>
+			#raycast-canvas {
+				margin: 0 auto;
+				width: 100%;
+			}
+			#texture-render {
+				display: none;
+			}
+		</style>
+		<script>
+			const canvas   = document.querySelector( "#raycast-canvas" );
+			const tcanvas  = document.querySelector( "#texture-render" ); //Канвас для рендера текстуры
+			const context  = canvas.getContext( "2d" );
+			context.font   = "20px roboto";
+			const width    = canvas.width;
+			const height   = canvas.height;
+			const widthH   = parseInt( canvas.width / 2 );
+			const heightH  = parseInt( canvas.height / 2 );
+			const fov      = Math.PI / 3; //Угол обзора
+			const fovHalf  = fov * 0.5;
+			const fovStep  = fov / canvas.width; //Шаг угла при проходе по экрану
+			const viewDist = 15; //Дистанция отрисовки
+			const heightStep = viewDist / heightH;
+			const camDepth = widthH / Math.tan( fovHalf ); //Глубина проекции
+			const textures = [];
+			//Текстуры с сайта https://iddqd.ru/textures?find=Doom+Hi-Res+Texture+Pack&showfull=1
+			textures[ 0 ]  = new DImage( "img/wall-0.jpg" );
+			textures[ 1 ]  = new DImage( "img/wall-1.jpg" );
+			textures[ 2 ]  = new DImage( "img/wall-2.jpg" );
+			textures[ 3 ]  = new DImage( "img/door-0.jpg" );
+			textures[ 4 ]  = new DImage( "img/floor-0.jpg" );
+			const maxHeight = height * 2;
+			const textSize  = 256;
+			//Уровень
+			const map      = [ 
+								0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 1 ,
+								3 , 0 , 0 , 2 , 2 , 0 , 1 , 1 , 1 , 0 ,
+								1 , 0 , 2 , 2 , 0 , 0 , 0 , 0 , 1 , 0 ,
+								0 , 0 , 0 , 1 , 0 , 1 , 0 , 0 , 0 , 0 ,
+								0 , 0 , 1 , 1 , 0 , 1 , 0 , 0 , 1 , 0 ,
+								0 , 0 , 0 , 1 , 1 , 1 , 1 , 0 , 1 , 0 ,
+								1 , 0 , 0 , 0 , 0 , 1 , 0 , 0 , 1 , 0 ,
+								0 , 0 , 1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 ,
+								0 , 1 , 1 , 1 , 0 , 0 , 1 , 1 , 1 , 3 ,
+								0 , 0 , 0 , 1 , 0 , 0 , 0 , 0 , 0 , 3
+							 ];
+			const level     = new Map( 10 , 10 , map );
+			const cellWidth = height / level.size.x;
+			//Позиция камеры
+			let   cameraPosition = new Vector3F( 0.5 , 0 , 0.5 );
+			let   cameraAngle    = 1.57;
+			const cameraRotAngle = 0.1;
+			const cameraSpeed    = 0.1;
+			const draw           = new Draw();
+			const caster         = new Raycaster();
+			
+			window.addEventListener( "keydown" , function( e ) {
+				if( e.keyCode == 87 ) {
+					cameraPosition = cameraPosition.Plus( caster.CreateVectorFromAngle( cameraSpeed , cameraAngle ) );
+				}
+				if( e.keyCode == 83 ) {
+					cameraPosition = cameraPosition.Subtract( caster.CreateVectorFromAngle( cameraSpeed , cameraAngle ) );
+				}
+				if( e.keyCode == 65 ) {
+					cameraAngle -= cameraRotAngle;
+				}
+				if( e.keyCode == 68 ) {
+					cameraAngle += cameraRotAngle;
+				}
+			});
+			
+			function RenderRays() {
+				draw.DrawTexturedFloor(); //Рисует пол
+				draw.DrawSky();   //Рисует небо
+				let cast  = 0; //Иниациализация переменной для дистанции
+				let angle = -fovHalf; //Стартовый угол
+				<!-- DrawMap(); -->
+				<!-- DrawPlayer(); -->
+				for( let w = 0; w < width; w++ ) { //Проходит по ширине экрана
+					let rayAngle = cameraAngle + angle; //Угол самого луча
+					if( cast = caster.Cast( rayAngle ) ) {
+						let distance = cast[ 0 ];
+						let side     = cast[ 1 ];
+						let textId   = cast[ 2 ];
+						let textureX = ( !side ) ? cameraPosition.z + distance * Math.sin( rayAngle ) : cameraPosition.x + distance * Math.cos( rayAngle );
+							textureX = parseInt( Math.abs( textureX - Math.floor( textureX ) ) * textSize );
+							draw.DrawTexturedWall( w , distance * Math.cos( angle ) , textId , textureX );
+					//draw.DrawLine( cameraPosition.Multiply( cellWidth ) , cameraPosition.Plus( caster.CreateVectorFromAngle( distance , rayAngle ) ).Multiply( cellWidth ) , "rgba( 255 , 0 , 0 , 0.1 )" ); //Если дистанция не равна нулю, рисуем стену 
+					}
+					angle       += fovStep; //Повышает угол на один шаг 
+				}
+				//draw.DrawLine( cameraPosition.Multiply( cellWidth ) , cameraPosition.Plus( caster.CreateVectorFromAngle( viewDist , cameraAngle - fovHalf ) ).Multiply( cellWidth ) , "red" );
+				//draw.DrawLine( cameraPosition.Multiply( cellWidth ) , cameraPosition.Plus( caster.CreateVectorFromAngle( viewDist , cameraAngle + fovHalf ) ).Multiply( cellWidth ) , "red" );
+			}
+
+			//Основной цикл
+			function Frame() {
+				context.clearRect(0, 0, canvas.width, canvas.height);
+				RenderRays();
+				window.requestAnimationFrame( Frame );
+			}
+			setTimeout( function() {
+				window.requestAnimationFrame( Frame );
+			} , 1000 );
+
+			canvas.addEventListener("click", async () => {
+					await canvas.requestFullscreen();
+					await canvas.requestPointerLock( {
+					unadjustedMovement: true,
+				});
+			});
+			function DrawMap() {
+				for( let y = 0; y < level.size.y; y++ ) {
+					let cellPosY = y * cellWidth;
+					let cellY    = y * level.size.x;
+					for( let x = 0; x < level.size.x; x++ ) {
+						let cellPosX = x * cellWidth;
+						let key      = level.GetMapKey( x , y );
+						( map[ key ] > 0 ) ? context.fillStyle = "black" : context.fillStyle = "gray";
+						context.fillRect( cellPosX, cellPosY , cellWidth - 2 , cellWidth - 2 );
+					}
+				}
+			}
+			function DrawPlayer() {
+				context.fillStyle = "red";
+				let cellPosY = cameraPosition.z * cellWidth;
+				let cellPosX = cameraPosition.x * cellWidth;
+				context.fillRect( cellPosX - 5 , cellPosY - 5 , 10 , 10 );
+				draw.DrawLine( { x : cellPosX , z : cellPosY } , { x : cellPosX + Math.cos( cameraAngle ) * 10 , z : cellPosY + Math.sin( cameraAngle ) * 10 } , "black" );
+			}
+		</script>
+	</body>
+</html>
