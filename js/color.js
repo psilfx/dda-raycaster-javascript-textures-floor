@@ -1,8 +1,8 @@
 /**
  ** @desc Объект для работы с цветом, используется для смешивания и вывода цвета на рендер
  **/
- const colorPercentCache = [];
- const colorHalfDevideCache = [];
+const colorPercentCache    = [];
+const colorHalfDevideCache = [];
 for( let c = 0; c <= 255; c++ ) {
 	 colorPercentCache[ c ] = c / 255;
 }

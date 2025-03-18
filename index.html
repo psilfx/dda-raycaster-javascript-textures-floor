@@ -35,7 +35,7 @@
 			const fovHalf  = fov * 0.5;
 			const fovStep  = fov / canvas.width; //Шаг угла при проходе по экрану
 			const viewDist = 15; //Дистанция отрисовки
-			const heightStep = viewDist / heightH;
+			const heightStep  = viewDist / heightH;
 			const floorAspect = Math.tan( fovHalf * 1.1 );
 			const camDepth = widthH / Math.tan( fovHalf ); //Глубина проекции
 			const textures = [];
@@ -86,13 +86,9 @@
 			});
 			
 			function RenderRays() {
-				//draw.DrawTexturedFloor(); //Рисует пол
 				draw.DrawSky();   //Рисует небо
-				let cast  = 0; //Иниациализация переменной для дистанции
-				let angle = -fovHalf; //Стартовый угол
-				
-				<!-- DrawMap(); -->
-				<!-- DrawPlayer(); -->
+				let cast       = 0; //Иниациализация переменной для дистанции
+				let angle      = -fovHalf; //Стартовый угол
 				let floorDrawY = [];
 				for( let w = 0; w < width; w++ ) { //Проходит по ширине экрана
 					let rayAngle = cameraAngle + angle; //Угол самого луча
@@ -104,7 +100,6 @@
 						let textureX = ( !side ) ? cameraPosition.z + distance * Math.sin( rayAngle ) : cameraPosition.x + distance * Math.cos( rayAngle );
 							textureX = parseInt( Math.abs( textureX - Math.floor( textureX ) ) * textSize );
 							floorY   = draw.DrawTexturedWall( w , distance * Math.cos( angle ) , textId , textureX );
-					//draw.DrawLine( cameraPosition.Multiply( cellWidth ) , cameraPosition.Plus( caster.CreateVectorFromAngle( distance , rayAngle ) ).Multiply( cellWidth ) , "rgba( 255 , 0 , 0 , 0.1 )" ); //Если дистанция не равна нулю, рисуем стену 
 					}
 					floorDrawY[ w ] = parseInt( floorY );
 					angle       += fovStep; //Повышает угол на один шаг 
@@ -115,9 +110,6 @@
 					if( floorY ) draw.DrawTexturedFloor( w , floorY );
 				}
 				draw.Draw();
-				
-				//draw.DrawLine( cameraPosition.Multiply( cellWidth ) , cameraPosition.Plus( caster.CreateVectorFromAngle( viewDist , cameraAngle - fovHalf ) ).Multiply( cellWidth ) , "red" );
-				//draw.DrawLine( cameraPosition.Multiply( cellWidth ) , cameraPosition.Plus( caster.CreateVectorFromAngle( viewDist , cameraAngle + fovHalf ) ).Multiply( cellWidth ) , "red" );
 			}
 
 			//Основной цикл
@@ -126,6 +118,7 @@
 				RenderRays();
 				window.requestAnimationFrame( Frame );
 			}
+			//Задержка, чтобы успели прогрузиться текстуры
 			setTimeout( function() {
 				window.requestAnimationFrame( Frame );
 			} , 1000 );
@@ -136,25 +129,6 @@
 					unadjustedMovement: true,
 				});
 			});
-			function DrawMap() {
-				for( let y = 0; y < level.size.y; y++ ) {
-					let cellPosY = y * cellWidth;
-					let cellY    = y * level.size.x;
-					for( let x = 0; x < level.size.x; x++ ) {
-						let cellPosX = x * cellWidth;
-						let key      = level.GetMapKey( x , y );
-						( map[ key ] > 0 ) ? context.fillStyle = "black" : context.fillStyle = "gray";
-						context.fillRect( cellPosX, cellPosY , cellWidth - 2 , cellWidth - 2 );
-					}
-				}
-			}
-			function DrawPlayer() {
-				context.fillStyle = "red";
-				let cellPosY = cameraPosition.z * cellWidth;
-				let cellPosX = cameraPosition.x * cellWidth;
-				context.fillRect( cellPosX - 5 , cellPosY - 5 , 10 , 10 );
-				draw.DrawLine( { x : cellPosX , z : cellPosY } , { x : cellPosX + Math.cos( cameraAngle ) * 10 , z : cellPosY + Math.sin( cameraAngle ) * 10 } , "black" );
-			}
 		</script>
 	</body>
 </html>

@@ -11,7 +11,7 @@ class Raycaster {
 		let textureId = 0;
 		let { direction , delta , start , distance , step , side } = this.DDARay( rayAngle , cameraPosition.Copy() );
 		for( let d = 0; d < viewDist; d++ ) {
-			// Двигаемся к следующей клетке
+			//Двигаемся к следующей клетке
 			if ( distance.x < distance.z ) {
 				distance.x += delta.x;
 				start.x    += step.x;
@@ -21,7 +21,7 @@ class Raycaster {
 				start.z    += step.z;
 				side        = 1;
 			}
-			// Проверяем, попали ли в стену
+			//Проверяем, попали ли в стену
 			textureId = level.CheckCell( start ); //Либо 0 либо id текстуры
 			if ( start.x < 0 || start.z < 0 || start.x >= level.size.x || start.z >= level.size.y || textureId ) {
 				if( start.x < 0 || start.z < 0 || start.x > level.size.x || start.z > level.size.y ) textureId = 0;

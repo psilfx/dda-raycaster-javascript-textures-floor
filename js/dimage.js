@@ -40,7 +40,6 @@ class DImage {
 			}
 			this.wrap.CreateRGBA();
 		}
-		
 	}
 	/**
 	 ** @desc Создаёт массив с объектами пикселей, чтобы не создавать их каждый раз
@@ -86,10 +85,6 @@ class DImage {
 	GetPixelFromData( x , y ) {
 		let pixel = {};
 		let pixelPointer = this.rgbaStride[ y ] + this.rgbaXOff[ x ];
-		pixel.r = this.pixels[ pixelPointer ];
-		pixel.g = this.pixels[ pixelPointer + 1 ];
-		pixel.b = this.pixels[ pixelPointer + 2 ];
-		pixel.a = this.pixels[ pixelPointer + 3 ];
-		return pixel;
+		return new Color( this.pixels[ pixelPointer ] , this.pixels[ pixelPointer + 1 ] , this.pixels[ pixelPointer + 2 ] , this.pixels[ pixelPointer + 3 ] );
 	}
 }
